@@ -1,0 +1,37 @@
+---
+# svc-blog  > cluster-ip(default)
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-blog  # 인그레스 룰에 있는 svc-shop의 이름과 같아야 한다
+spec:
+  selector:
+    app: blog
+  ports:
+  - port: 80
+    targetPort: 80  # 타겟의 ip를 안 정해주면 기본적으로 클러스터 ip
+---
+# deploy-blog
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: blog   
+  template:
+    metadata:
+      labels:
+        app: blog
+    spec:
+      containers:
+      - name: blog
+        image: dhdtl12/portal:blog
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80

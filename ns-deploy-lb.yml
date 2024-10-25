@@ -1,0 +1,51 @@
+---
+# 네임스페이스 작성(별도의 프로젝트 공간)
+apiVersion: v1
+kind: Namespace
+metadata: 
+  name: samsung
+
+---
+# Deployment
+apiVersion: apps/v1     # apps는 api의 그룹 이름, v1는 apps의 api 버전, 
+                        # api그룹 확인하는 명령어는 kubectl api-versions, Kubernetes는 API의 버전을 관리하여 하위 호환성을 유지
+
+kind: Deployment
+metadata:
+  name: samsung-deploy
+  namespace: samsung
+  labels:                  # 파드, 디플로이 둘다 라벨붙일 수 있는데 여기는 디플로이먼트에 라벨 붙인거임
+    app: web
+    port: cloud
+spec:
+  replicas: 3
+  selector:              # 어떤 라벨을 확인할 것인가?
+    matchLabels:
+      app: web             # deploy의 라벨이 아니라, pod의 라벨을 지정한다
+  template:             # 이 부분부터 Pod에 대한 정의를 한다
+    metadata:            # 파드의 name을 별도로 지정할 필요는 없음. deploy이름 = rs이름 = pod이름
+      labels:
+        app: web
+    spec:                # Pod 내에 들어갈 것들 (컨테이너)
+      containers:
+        - name: web
+          image: nginx
+          ports:
+          - containerPort: 80
+--- 
+# 서비스(로드밸런서)
+apiVersion: v1
+kind: Service
+metadata:
+  name: samsung-lb    # 이 서비스의 이름
+  namespace: samsung   
+spec:
+  type: LoadBalancer
+  selector:
+    app: web          # label이 app: web이라고 달려 있음
+  ports: 
+  - protocol: TCP
+    port: 80          # 로드밸런서의 포트
+    targetPort: 80
+    # nodeport : 노드포트는 램덤이므로 지정할 필요 없음. 
+    # 여러 서비스가 노드포트를 공유하므로 겹치지 않도록 랜덤설정이 오히려 좋다
